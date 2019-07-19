@@ -74,6 +74,15 @@ func initXlsxColumns() {
 	}
 }
 
+func writeXlsxTitle(file *excelize.File, sheet string, columns []string) {
+	for i, column := range columns {
+		byteBuff := bytes.Buffer{}
+		byteBuff.WriteString(xlsxColumns[i])
+		byteBuff.WriteString("1")
+		file.SetCellValue(sheet, byteBuff.String(), convertToString(column, "gbk", "utf-8"))
+	}
+}
+
 
 func main() {
 	initFlag()
@@ -115,19 +124,21 @@ func main() {
 	}
 
 	sheet := "Sheet1"
+	sheetCount := 1
 	rowCount := 2
 
-	for i, column := range columns {
-		byteBuff := bytes.Buffer{}
-		byteBuff.WriteString(xlsxColumns[i])
-		byteBuff.WriteString("1")
-		// file.SetCellValue(sheet, byteBuff.String(), column)
-		file.SetCellValue(sheet, byteBuff.String(), convertToString(column, "gbk", "utf-8"))
-	}
+	writeXlsxTitle(file, sheet, columns)
 
 	for rows.Next() {
 		if rowCount > sheetPageCount {
-			break
+			sheetCount++
+			byteBuff := bytes.Buffer{}
+			byteBuff.WriteString("Sheet")
+			byteBuff.WriteString(strconv.Itoa(sheetCount))
+			sheet = byteBuff.String()
+			file.NewSheet(sheet)
+			writeXlsxTitle(file, sheet, columns)
+			rowCount = 2
 		}
 
 		err = rows.Scan(scanArgs...)
@@ -145,13 +156,14 @@ func main() {
 			}
 			file.SetCellValue(sheet, byteBuff.String(), value)
 		}
-		rowCount += 1
+		rowCount++
 	}
 
 	if err = rows.Err(); err != nil {
 		log.Fatalln(err)
 	}
 
+	file.SetActiveSheet(1)
 	err = file.SaveAs(xlsxFile)
 	if err != nil {
 		log.Fatalln(err)
