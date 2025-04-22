@@ -1,14 +1,15 @@
 package main
 
 import (
-	"database/sql"
-	"log"
-	"fmt"
-	"os"
 	"bytes"
+	"database/sql"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"strconv"
+
 	"github.com/axgle/mahonia"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
@@ -18,11 +19,11 @@ import (
 var xlsxColumns []string
 
 var (
-	help bool
-	databaseUrl string
-	sqlFilePath string = "1.txt"
-	xlsxFilePath string = "1.xlsx"
-	sheetPageCount int = 1000000
+	help           bool
+	databaseUrl    string
+	sqlFilePath    string = "1.txt"
+	xlsxFilePath   string = "1.xlsx"
+	sheetPageCount int    = 1000000
 )
 
 func usage() {
@@ -31,7 +32,7 @@ Usage: export_xlsx -l databaseUrl [-s sqlfilepath] [-x xlsxfilepath] [-c sheetpa
 
 Options:
 `)
-    flag.PrintDefaults()
+	flag.PrintDefaults()
 }
 
 func initFlag() {
@@ -45,12 +46,12 @@ func initFlag() {
 }
 
 func convertToString(src string, srcCode string, tagCode string) string {
-    srcCoder := mahonia.NewDecoder(srcCode)
-    srcResult := srcCoder.ConvertString(src)
-    tagCoder := mahonia.NewDecoder(tagCode)
-    _, cdata, _ := tagCoder.Translate([]byte(srcResult), true)
-    result := string(cdata)
-    return result
+	srcCoder := mahonia.NewDecoder(srcCode)
+	srcResult := srcCoder.ConvertString(src)
+	tagCoder := mahonia.NewDecoder(tagCode)
+	_, cdata, _ := tagCoder.Translate([]byte(srcResult), true)
+	result := string(cdata)
+	return result
 }
 
 func readFileToMemory(srcFile string) string {
@@ -62,11 +63,11 @@ func readFileToMemory(srcFile string) string {
 }
 
 func initXlsxColumns() {
-	for i := 0; i < 25; i++ {
+	for i := 0; i < 27; i++ {
 		for j := 0; j < 26; j++ {
 			byteBuff := bytes.Buffer{}
 			if i > 0 {
-				byteBuff.WriteString(string(65 + i))
+				byteBuff.WriteString(string(65 + i - 1))
 			}
 			byteBuff.WriteString(string(65 + j))
 			xlsxColumns = append(xlsxColumns, byteBuff.String())
@@ -83,15 +84,14 @@ func writeXlsxTitle(file *excelize.File, sheet string, columns []string) {
 	}
 }
 
-
 func main() {
 	initFlag()
 	flag.Parse()
 
-    if help || len(databaseUrl) == 0 {
-        flag.Usage()
+	if help || len(databaseUrl) == 0 {
+		flag.Usage()
 		return
-    }
+	}
 
 	sqlContent := readFileToMemory(sqlFilePath)
 	xlsxFile := xlsxFilePath
@@ -156,6 +156,7 @@ func main() {
 			}
 			file.SetCellValue(sheet, byteBuff.String(), value)
 		}
+		log.Printf("[WRITE XLSX] Write sheet: %d, row count: %d successful.", sheetCount, rowCount)
 		rowCount++
 	}
 
